@@ -1,5 +1,5 @@
 import { initializeApp } from "firebase/app";
-import { getAnalytics } from "firebase/analytics";
+import { getAnalytics, isSupported } from "firebase/analytics";
 import { 
   getAuth, 
   signInWithEmailAndPassword, 
@@ -28,8 +28,19 @@ const firebaseConfig = {
 // Inicializar Firebase
 const app = initializeApp(firebaseConfig);
 
-// Inicializar Analytics (ya que venía en tu configuración)
-const analytics = getAnalytics(app);
+// Inicializar Analytics de manera silenciosa para no bloquear la app
+// Usamos isSupported para evitar errores en entornos restringidos
+isSupported().then(supported => {
+  if (supported) {
+    try {
+      getAnalytics(app);
+    } catch (e) {
+      console.warn("Analytics no pudo iniciarse (no es crítico):", e);
+    }
+  }
+}).catch(() => {
+  // Ignoramos errores de soporte de analytics
+});
 
 // Inicializar Auth
 export const auth = getAuth(app);

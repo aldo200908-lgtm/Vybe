@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { AppState, GeneratedLook } from './types';
 import { MOCK_USER, CLIMATE_CHOICES } from './constants';
@@ -76,12 +75,15 @@ const App: React.FC = () => {
     try {
       const vibes = ["Neo-Urbano", "Cyber-Minimalista", "Gorpcore Avanzado", "Tech-Noir"];
       const randomVibe = vibes[Math.floor(Math.random() * vibes.length)];
+      
       const look = await generateFashionLook(randomVibe, "Actividad Urbana Diaria", selectedClimate);
+      
       setCurrentLook(look);
-      setTimeout(() => setView('LOOK_DETAILS'), 2500);
+      // Pequeño delay artificial para apreciar la animación de carga si la API es muy rápida
+      setTimeout(() => setView('LOOK_DETAILS'), 1500);
     } catch (err) {
-      console.error(err);
-      alert("Error generando el look. Verifica tu API Key.");
+      console.error("Generation Error:", err);
+      alert("Error conectando con la Inteligencia Artificial. \n\nAsegúrate de haber configurado tu API KEY de Google Gemini en el archivo .env como 'API_KEY'.");
       setView('DASHBOARD');
     }
   };
