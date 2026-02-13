@@ -51,7 +51,10 @@ export const generateFashionLook = async (
     }
   });
 
-  const result = JSON.parse(response.text || '{}');
+  // Clean JSON response in case of Markdown formatting
+  const rawText = response.text || '{}';
+  const cleanText = rawText.replace(/```json\n?|\n?```/g, '').trim();
+  const result = JSON.parse(cleanText);
   
   const lookImages = [
     'https://lh3.googleusercontent.com/aida-public/AB6AXuCzGVdv5IDTla-J_mcyt6cgT9UsjQ8Jzy_t6Y3NkppYRijpp2aa9U3kmQ8WQke-6m8QRj1k-ZqiLOJbuFnaqElsDP_4q89CpSnyAPNb-mGWXHxxxmRCtoC7MGRaiMdrzIj3RGiEPP-GM69VfWDx-vIsxVhBTW53FlFhP3_AeIkOkud3IouYnez7rCavVykmT7YxsBldic5R42vHyYR-KQzuteDeDgtH3DuSEKuAhlgctBOAbbAl4rNJ55-ZjITypbnpnduV-ErZy64',

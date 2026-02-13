@@ -1,4 +1,5 @@
 import { initializeApp } from "firebase/app";
+import { getAnalytics } from "firebase/analytics";
 import { 
   getAuth, 
   signInWithEmailAndPassword, 
@@ -12,23 +13,25 @@ import {
 
 /**
  * CONFIGURACIÓN DE FIREBASE
- * En Vite, las variables de entorno deben comenzar con VITE_.
- * Ajuste: Usamos process.env en lugar de import.meta.env para compatibilidad con el entorno actual.
+ * Credenciales del proyecto 'vybe-247f2'.
  */
-
 const firebaseConfig = {
-  apiKey: process.env.VITE_FIREBASE_API_KEY,
-  authDomain: process.env.VITE_FIREBASE_AUTH_DOMAIN,
-  projectId: process.env.VITE_FIREBASE_PROJECT_ID,
-  storageBucket: process.env.VITE_FIREBASE_STORAGE_BUCKET,
-  messagingSenderId: process.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
-  appId: process.env.VITE_FIREBASE_APP_ID
+  apiKey: "AIzaSyATQ9vvGrwkWQ9-rk7BYE5xKjrKBFo8AtU",
+  authDomain: "vybe-247f2.firebaseapp.com",
+  projectId: "vybe-247f2",
+  storageBucket: "vybe-247f2.firebasestorage.app",
+  messagingSenderId: "116209437083",
+  appId: "1:116209437083:web:427b5576550c5abfa8393e",
+  measurementId: "G-WNQRG2GGTN"
 };
 
-// Inicialización defensiva. 
-// initializeApp maneja internamente configs vacías lanzando errores descriptivos de Firebase si faltan keys,
-// pero esto evita el crash de JS inmediato por intentar leer propiedades de undefined.
+// Inicializar Firebase
 const app = initializeApp(firebaseConfig);
+
+// Inicializar Analytics (ya que venía en tu configuración)
+const analytics = getAnalytics(app);
+
+// Inicializar Auth
 export const auth = getAuth(app);
 
 // Configuración del proveedor de Google
