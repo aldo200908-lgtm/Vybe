@@ -32,7 +32,7 @@ const App: React.FC = () => {
 
   const handleEmailAuth = async (type: 'LOGIN' | 'REGISTER') => {
     if (!email || !password) {
-      setError('Credenciales incompletas');
+      setError('Por favor ingresa email y contraseña');
       return;
     }
     setLoading(true);
@@ -44,9 +44,15 @@ const App: React.FC = () => {
     } catch (err: any) {
       console.error(err);
       let msg = 'Error de autenticación';
-      if (err.code === 'auth/invalid-credential') msg = 'Credenciales inválidas';
-      if (err.code === 'auth/email-already-in-use') msg = 'Email ya registrado';
-      if (err.code === 'auth/weak-password') msg = 'Contraseña muy débil';
+      if (err.code === 'auth/invalid-credential' || err.code === 'auth/user-not-found' || err.code === 'auth/wrong-password') {
+        msg = 'Credenciales incorrectas. Intenta de nuevo.';
+      } else if (err.code === 'auth/email-already-in-use') {
+        msg = 'Este email ya está registrado.';
+      } else if (err.code === 'auth/weak-password') {
+        msg = 'La contraseña debe tener al menos 6 caracteres.';
+      } else if (err.code === 'auth/network-request-failed') {
+        msg = 'Error de conexión.';
+      }
       setError(msg);
       setLoading(false);
     }
@@ -59,8 +65,19 @@ const App: React.FC = () => {
       await authService.signInWithGoogle();
       // El cambio de vista se maneja en el useEffect
     } catch (err: any) {
-      console.error(err);
-      setError('Cancelado o error en Google Auth');
+      console.error("Google Auth Error:", err);
+      let msg = 'Error al conectar con Google';
+      
+      // Manejo específico para dominio no autorizado
+      if (err.code === 'auth/unauthorized-domain') {
+        msg = 'Dominio no autorizado (Error de Preview). Por favor usa Email/Contraseña abajo.';
+      } else if (err.code === 'auth/popup-closed-by-user') {
+        msg = 'Inicio de sesión cancelado.';
+      } else if (err.code === 'auth/popup-blocked') {
+        msg = 'Ventana emergente bloqueada por el navegador.';
+      }
+      
+      setError(msg);
       setLoading(false);
     }
   };
@@ -150,7 +167,7 @@ const App: React.FC = () => {
                       value={email} 
                       onChange={(e) => setEmail(e.target.value)} 
                       className="w-full bg-white/[0.03] border border-white/5 rounded-2xl py-4 pl-14 pr-6 outline-none focus:border-primary focus:bg-white/[0.06] transition-all text-sm font-medium placeholder:text-white/10" 
-                      placeholder="Operator Identity" 
+                      placeholder="Identidad de Operador" 
                     />
                   </div>
                   <div className="relative">
@@ -160,14 +177,14 @@ const App: React.FC = () => {
                       value={password} 
                       onChange={(e) => setPassword(e.target.value)} 
                       className="w-full bg-white/[0.03] border border-white/5 rounded-2xl py-4 pl-14 pr-6 outline-none focus:border-primary focus:bg-white/[0.06] transition-all text-sm font-medium placeholder:text-white/10" 
-                      placeholder="Security Protocol" 
+                      placeholder="Protocolo de Seguridad" 
                     />
                   </div>
                 </div>
 
                 {error && (
-                  <div className="py-3 px-4 bg-red-500/10 border border-red-500/20 rounded-xl animate-pulse">
-                    <p className="text-red-400 text-[9px] font-bold text-center uppercase tracking-widest">{error}</p>
+                  <div className="py-3 px-4 bg-red-500/10 border border-red-500/20 rounded-xl animate-pulse text-center">
+                    <p className="text-red-400 text-[10px] font-bold uppercase tracking-widest leading-relaxed">{error}</p>
                   </div>
                 )}
 
@@ -179,16 +196,19 @@ const App: React.FC = () => {
                   {loading ? (
                     <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
                   ) : (
-                    <>{view === 'LOGIN' ? 'Initialize session' : 'Register Operator'} <span className="material-icons-round text-xl">login</span></>
+                    <>{view === 'LOGIN' ? 'Inicializar Sesión' : 'Registrar Operador'} <span className="material-icons-round text-xl">login</span></>
                   )}
                 </button>
               </div>
 
               <button 
-                onClick={() => setView(view === 'LOGIN' ? 'REGISTER' : 'LOGIN')} 
+                onClick={() => {
+                  setError('');
+                  setView(view === 'LOGIN' ? 'REGISTER' : 'LOGIN');
+                }} 
                 className="mt-10 text-white/20 text-[9px] font-bold uppercase tracking-[0.4em] hover:text-primary transition-colors"
               >
-                {view === 'LOGIN' ? "Don't have access? Create Profile" : "Existing Operator? Sign In"}
+                {view === 'LOGIN' ? "¿Sin acceso? Crear Perfil" : "¿Ya eres Operador? Entrar"}
               </button>
             </div>
 
@@ -207,7 +227,7 @@ const App: React.FC = () => {
                   <img src={currentUser?.photoURL || MOCK_USER.avatar} className="w-full h-full object-cover rounded-[calc(1rem-2px)]" alt="Profile" />
                 </div>
                 <div>
-                  <h2 className="text-[9px] font-black text-white/30 uppercase tracking-[0.2em] mb-0.5">Operator</h2>
+                  <h2 className="text-[9px] font-black text-white/30 uppercase tracking-[0.2em] mb-0.5">Operador</h2>
                   <h1 className="text-lg font-black italic uppercase tracking-tighter truncate max-w-[150px]">
                     {currentUser?.displayName || currentUser?.email?.split('@')[0]}
                   </h1>
@@ -220,7 +240,7 @@ const App: React.FC = () => {
 
             <div className="space-y-8">
               <div className="bg-gradient-to-br from-primary/20 to-purple-900/10 border border-primary/20 rounded-[2.5rem] p-8 relative overflow-hidden group shadow-neon">
-                <h3 className="text-[10px] font-black uppercase tracking-[0.3em] text-primary mb-6">Environment Sync</h3>
+                <h3 className="text-[10px] font-black uppercase tracking-[0.3em] text-primary mb-6">Sincronización Ambiental</h3>
                 <div className="grid grid-cols-5 gap-3">
                   {CLIMATE_CHOICES.map(c => (
                     <button 
@@ -234,26 +254,26 @@ const App: React.FC = () => {
                 </div>
                 <div className="mt-10 flex justify-between items-end">
                   <div>
-                    <p className="text-[9px] font-bold text-white/20 uppercase tracking-widest mb-1">Status</p>
+                    <p className="text-[9px] font-bold text-white/20 uppercase tracking-widest mb-1">Estado</p>
                     <p className="text-2xl font-black italic uppercase tracking-tighter text-white">
                       {CLIMATE_CHOICES.find(c => c.id === selectedClimate)?.name}
                     </p>
                   </div>
                   <button onClick={handleGenerate} className="bg-white text-black font-black text-[9px] px-8 py-3.5 rounded-full uppercase tracking-widest hover:bg-primary hover:text-white transition-all shadow-2xl active:scale-95">
-                    Synthesize
+                    Sintetizar
                   </button>
                 </div>
               </div>
 
               <div className="space-y-6">
-                <h3 className="font-black text-xl uppercase tracking-tighter italic">Style Archive</h3>
+                <h3 className="font-black text-xl uppercase tracking-tighter italic">Archivo de Estilo</h3>
                 <div className="grid grid-cols-2 gap-4">
                   {[1, 2, 3, 4].map(i => (
                     <div key={i} className="aspect-[3/4] bg-white/5 rounded-[2rem] overflow-hidden relative border border-white/5 group cursor-pointer shadow-lg active:scale-95 transition-transform">
                       <img src={`https://picsum.photos/seed/vybe_mod_${i+50}/400/600`} className="w-full h-full object-cover grayscale brightness-50 group-hover:grayscale-0 transition-all duration-1000" alt="outfit" />
                       <div className="absolute inset-0 bg-gradient-to-t from-black/95 via-transparent to-transparent"></div>
                       <div className="absolute bottom-5 left-5">
-                        <span className="text-[7px] font-black italic text-primary uppercase tracking-widest">Entry</span>
+                        <span className="text-[7px] font-black italic text-primary uppercase tracking-widest">Entrada</span>
                         <p className="text-xs font-bold tracking-tight">VYB-LOG-{i*102}</p>
                       </div>
                     </div>
@@ -273,7 +293,7 @@ const App: React.FC = () => {
               <span className="absolute inset-0 flex items-center justify-center material-icons-round text-primary animate-pulse">auto_awesome</span>
             </div>
             <h2 className="text-[10px] font-black uppercase tracking-[0.5em] text-primary animate-pulse text-center leading-loose">
-              Mapping Aesthetic Entropies...<br/><span className="text-white/20">Gemini 3.0 Processing</span>
+              Mapeando Entropías Estéticas...<br/><span className="text-white/20">Procesando Gemini 3.0</span>
             </h2>
           </div>
         );
@@ -324,15 +344,15 @@ const App: React.FC = () => {
             <h1 className="text-4xl font-black italic uppercase tracking-tighter mb-1">
               {currentUser?.displayName || currentUser?.email?.split('@')[0]}
             </h1>
-            <p className="text-primary text-[8px] font-bold uppercase tracking-[0.3em] mb-12 italic opacity-60">Verified Identity</p>
+            <p className="text-primary text-[8px] font-bold uppercase tracking-[0.3em] mb-12 italic opacity-60">Identidad Verificada</p>
             <div className="w-full grid grid-cols-2 gap-4 mb-10">
               <div className="bg-white/5 p-6 rounded-[2rem] border border-white/5 text-center">
                 <p className="text-3xl font-black text-white italic">28</p>
-                <p className="text-[7px] font-bold text-white/30 uppercase tracking-widest mt-1">Generated</p>
+                <p className="text-[7px] font-bold text-white/30 uppercase tracking-widest mt-1">Generados</p>
               </div>
               <div className="bg-white/5 p-6 rounded-[2rem] border border-white/5 text-center">
                 <p className="text-3xl font-black text-white italic">12.4k</p>
-                <p className="text-[7px] font-bold text-white/30 uppercase tracking-widest mt-1">Reach</p>
+                <p className="text-[7px] font-bold text-white/30 uppercase tracking-widest mt-1">Alcance</p>
               </div>
             </div>
 
@@ -340,7 +360,7 @@ const App: React.FC = () => {
               onClick={handleLogout}
               className="w-full bg-red-500/10 border border-red-500/20 py-5 rounded-2xl font-black text-[10px] text-red-400 uppercase tracking-[0.3em] flex items-center justify-center gap-2 hover:bg-red-500 hover:text-white transition-all"
             >
-              Terminate Session
+              Cerrar Sesión
             </button>
             <BottomNav />
           </div>
